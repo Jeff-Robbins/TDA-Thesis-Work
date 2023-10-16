@@ -5,6 +5,7 @@ import pprint
 
 import pandas as pd
 from ripser import ripser
+from persim import plot_diagrams
 # from tqdm import tqdm
 # import multiprocessing as mp
 
@@ -67,9 +68,15 @@ def get_fund_lifetime_from_pt_cloud(num_points):
     std_dev = 0.05
     noise = np.random.normal(mean, std_dev, num_points)
     points *= noise[:, np.newaxis]  # Scale radius by noise
+    print(points.shape)
+    threshold = float(1.5)
+    print("threshold: ", threshold)
 
     # Get fund_lifetime
-    diagrams = ripser(points, maxdim=2)['dgms']
+    t1 = time.time()
+    diagrams = ripser(points, maxdim=2, thresh=threshold)['dgms']
+    # diagrams = ripser(points, maxdim=2, n_jobs=4)['dgms']
+    print("Time to run risper: ", time.time()-t1)
     lifetime = max(abs(np.diff(diagrams[-1], axis=1)))[0]
 
     return lifetime
@@ -102,8 +109,12 @@ T1 = time.time()
 
 # n_lifetime_df = np.zeros((1000, 2))
 
-with Parallel(n_jobs=5) as parallel: # Using 10 cores
-    results = parallel(delayed(method)(num_points, dictionary) for num_points in sample_list)
+# with Parallel(n_jobs=5) as parallel: # Using 10 cores
+#     results = parallel(delayed(method)(num_points, dictionary) for num_points in sample_list)
+
+# results = method(sample_list[0], dictionary)
+for num_points in sample_list:
+    results = method(num_points, dictionary)
 
 for result in results:
     for key, value in result.items():
